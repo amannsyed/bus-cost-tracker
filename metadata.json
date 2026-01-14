@@ -1,0 +1,5 @@
+{
+  "name": "FareCompare: Bus Cost Tracker",
+  "description": "A sophisticated tracker to compare daily bus fare costs against a monthly direct debit subscription, helping commuters optimize their travel spend.",
+  "requestFramePermissions": []
+}
