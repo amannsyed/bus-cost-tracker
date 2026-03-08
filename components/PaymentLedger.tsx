@@ -1,16 +1,29 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { SubscriptionPayment } from '../types';
 import { format, parseISO } from 'date-fns';
-import { CreditCard, Trash2, Download } from 'lucide-react';
+import { CreditCard, Trash2, Download, Upload } from 'lucide-react';
 
 interface PaymentLedgerProps {
   payments: SubscriptionPayment[];
   onRemovePayment: (id: string) => void;
   onExport: () => void;
+  onImport: (file: File) => void;
 }
 
-const PaymentLedger: React.FC<PaymentLedgerProps> = ({ payments, onRemovePayment, onExport }) => {
+const PaymentLedger: React.FC<PaymentLedgerProps> = ({ payments, onRemovePayment, onExport, onImport }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImport(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[400px]">
       <div className="flex items-center justify-between mb-6 flex-shrink-0">
@@ -18,7 +31,17 @@ const PaymentLedger: React.FC<PaymentLedgerProps> = ({ payments, onRemovePayment
           <h3 className="text-lg font-bold text-slate-800 uppercase tracking-tight">Pass Ledger</h3>
           <p className="text-xs text-slate-400 mt-0.5">Subscription payment history</p>
         </div>
-        <button onClick={onExport} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Download CSV"><Download className="w-5 h-5" /></button>
+        <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            accept=".csv" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+          />
+          <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Upload CSV"><Upload className="w-5 h-5" /></button>
+          <button onClick={onExport} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Download CSV"><Download className="w-5 h-5" /></button>
+        </div>
       </div>
       
       <div className="overflow-y-auto flex-grow pr-2 custom-scrollbar">
