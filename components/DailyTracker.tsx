@@ -1,8 +1,8 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { DailyFare } from '../types';
 import { format, parseISO } from 'date-fns';
-import { Plus, X, Bus, Download, Trash2 } from 'lucide-react';
+import { Plus, X, Bus, Download, Upload, Trash2 } from 'lucide-react';
 
 interface DailyTrackerProps {
   dailyFares: DailyFare[];
@@ -10,9 +10,22 @@ interface DailyTrackerProps {
   onDeleteDay: (date: string) => void;
   onAddDay: () => void;
   onExport: () => void;
+  onImport: (file: File) => void;
 }
 
-const DailyTracker: React.FC<DailyTrackerProps> = ({ dailyFares, onRemoveFare, onDeleteDay, onAddDay, onExport }) => {
+const DailyTracker: React.FC<DailyTrackerProps> = ({ dailyFares, onRemoveFare, onDeleteDay, onAddDay, onExport, onImport }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImport(file);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-[600px]">
       <div className="flex items-center justify-between mb-6 flex-shrink-0">
@@ -21,6 +34,14 @@ const DailyTracker: React.FC<DailyTrackerProps> = ({ dailyFares, onRemoveFare, o
           <p className="text-xs text-slate-400 mt-0.5">Historical log of all PAYG entries</p>
         </div>
         <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            accept=".csv" 
+            className="hidden" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+          />
+          <button onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Upload CSV"><Upload className="w-5 h-5" /></button>
           <button onClick={onExport} className="p-2 text-slate-400 hover:text-indigo-600 transition-colors" title="Download CSV"><Download className="w-5 h-5" /></button>
           <button onClick={onAddDay} className="flex items-center gap-1.5 bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-indigo-100 transition-colors">
             <Plus className="w-3.5 h-3.5" /> Entry
