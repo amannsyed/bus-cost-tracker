@@ -10,7 +10,7 @@ import SetupScreen from './components/SetupScreen';
 import AddEntryModal from './components/AddEntryModal';
 import SettingsModal from './components/SettingsModal';
 import PaymentLedger from './components/PaymentLedger';
-import { Bus, RotateCcw, Plus, Settings, CreditCard, Download } from 'lucide-react';
+import { Bus, RotateCcw, Plus, Settings, CreditCard, Download, Upload } from 'lucide-react';
 
 const STORAGE_KEY_DATA = 'fare_compare_entries_v5';
 const STORAGE_KEY_CONFIG = 'fare_compare_config_v5';
@@ -206,6 +206,76 @@ const App: React.FC = () => {
     a.click();
   };
 
+  const importCSV = (type: 'trips' | 'payments', file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
+      
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      if (lines.length <= 1) return; // Only header or empty
+      
+      if (type === 'trips') {
+        const newFares: DailyFare[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          // Match "Date","Fares",Total Cost or Date,Fares,Total Cost
+          const match = line.match(/^"?([^",]+)"?,"?([^"]*)"?,([0-9.]+)$/);
+          if (match) {
+            const date = match[1];
+            const labels = match[2].split('; ').filter(l => l);
+            const totalCost = parseFloat(match[3]);
+            
+            const entries = labels.length > 0 
+              ? [{ label: labels.join(' + '), priceAtTime: totalCost }]
+              : [];
+              
+            if (entries.length > 0) {
+              newFares.push({ date, entries });
+            }
+          }
+        }
+        
+        if (newFares.length > 0) {
+          setDailyFares(prev => {
+            const merged = [...prev];
+            newFares.forEach(nf => {
+              const existingIndex = merged.findIndex(f => f.date === nf.date);
+              if (existingIndex > -1) {
+                merged[existingIndex].entries.push(...nf.entries);
+              } else {
+                merged.push(nf);
+              }
+            });
+            return merged.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+          });
+        }
+      } else {
+        const newPayments: SubscriptionPayment[] = [];
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          const match = line.match(/^"?([^",]+)"?,"?([^"]+)"?,([0-9.]+)$/);
+          if (match) {
+            newPayments.push({
+              id: crypto.randomUUID(),
+              date: match[1],
+              label: match[2],
+              amount: parseFloat(match[3])
+            });
+          }
+        }
+        
+        if (newPayments.length > 0) {
+          setPayments(prev => {
+            const merged = [...prev, ...newPayments];
+            return merged.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+          });
+        }
+      }
+    };
+    reader.readAsText(file);
+  };
+
   if (!config.isSetup) {
     return <SetupScreen onComplete={handleSetupComplete} initialConfig={config} />;
   }
@@ -265,11 +335,13 @@ const App: React.FC = () => {
               onDeleteDay={handleDeleteDay}
               onAddDay={() => setIsModalOpen(true)}
               onExport={() => exportCSV('trips')}
+              onImport={(file) => importCSV('trips', file)}
             />
             <PaymentLedger 
               payments={payments} 
               onRemovePayment={handleRemovePayment} 
               onExport={() => exportCSV('payments')}
+              onImport={(file) => importCSV('payments', file)}
             />
           </div>
           
