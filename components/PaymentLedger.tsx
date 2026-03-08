@@ -34,7 +34,7 @@ const PaymentLedger: React.FC<PaymentLedgerProps> = ({ payments, onRemovePayment
         <div className="flex items-center gap-2">
           <input 
             type="file" 
-            accept=".csv" 
+            accept=".csv,text/csv,application/vnd.ms-excel" 
             className="hidden" 
             ref={fileInputRef} 
             onChange={handleFileChange} 
