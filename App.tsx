@@ -155,8 +155,18 @@ const App: React.FC = () => {
       }
 
       // Apply weekly cap logic
+      let applicableCap = config.weeklyCap;
+      if (config.capHistory && config.capHistory.length > 0) {
+        // Find the most recent cap change that is <= current date
+        const sortedHistory = [...config.capHistory].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+        const pastCap = sortedHistory.find(h => h.date <= dateStr);
+        if (pastCap) {
+          applicableCap = pastCap.cap;
+        }
+      }
+
       const currentWeekTotal = weeklySpend[weekKey] || 0;
-      const allowedSpend = Math.max(0, config.weeklyCap - currentWeekTotal);
+      const allowedSpend = Math.max(0, applicableCap - currentWeekTotal);
       const dayCappedSpend = Math.min(dayRawTotal, allowedSpend);
       
       weeklySpend[weekKey] = currentWeekTotal + dayCappedSpend;
@@ -174,7 +184,7 @@ const App: React.FC = () => {
         timestamp: d.getTime()
       };
     });
-  }, [dailyFares, payments, config.weeklyCap]);
+  }, [dailyFares, payments, config.weeklyCap, config.capHistory]);
 
   const stats = useMemo(() => {
     if (!chartData.length) return { totalPayg: 0, totalSubscription: 0, breakEvenDay: null };
@@ -223,12 +233,21 @@ const App: React.FC = () => {
           const match = line.match(/^"?([^",]+)"?,"?([^"]*)"?,([0-9.]+)$/);
           if (match) {
             const date = match[1];
-            const labels = match[2].split('; ').filter(l => l);
+            const labelsStr = match[2];
             const totalCost = parseFloat(match[3]);
             
-            const entries = labels.length > 0 
-              ? [{ label: labels.join(' + '), priceAtTime: totalCost }]
-              : [];
+            // Reconstruct individual entries
+            const labels = labelsStr.split('; ').filter(l => l);
+            const entries = [];
+            
+            if (labels.length > 0) {
+              // Distribute the total cost evenly among the labels
+              // This ensures the raw total is exactly the same, but split into individual trips
+              const costPerTrip = totalCost / labels.length;
+              for (const label of labels) {
+                entries.push({ label, priceAtTime: costPerTrip });
+              }
+            }
               
             if (entries.length > 0) {
               newFares.push({ date, entries });
