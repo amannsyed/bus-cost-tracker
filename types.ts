@@ -10,6 +10,7 @@ export interface AppConfig {
   monthlyDebit: number;
   adminFee: number;
   weeklyCap: number; // User adjustable weekly PAYG cap
+  capHistory?: { date: string; cap: number; id: string }[]; // History of cap changes
   isSetup: boolean;
   fareCategories: FareCategory[]; // Dynamic categories
 }
