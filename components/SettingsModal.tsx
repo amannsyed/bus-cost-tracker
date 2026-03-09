@@ -18,6 +18,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
   });
   const [categories, setCategories] = useState<FareCategory[]>(config.fareCategories);
   const [newCat, setNewCat] = useState({ label: '', price: '' });
+  const [capHistory, setCapHistory] = useState<{ date: string; cap: number; id: string }[]>(config.capHistory || []);
+  const [newCapHistory, setNewCapHistory] = useState({ date: '', cap: '' });
 
   useEffect(() => {
     if (isOpen) {
@@ -27,6 +29,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
         weeklyCap: config.weeklyCap.toString(),
       });
       setCategories(config.fareCategories);
+      setCapHistory(config.capHistory || []);
     }
   }, [config, isOpen]);
 
@@ -46,6 +49,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
     setCategories(categories.filter(c => c.id !== id));
   };
 
+  const handleAddCapHistory = () => {
+    if (!newCapHistory.date || !newCapHistory.cap) return;
+    setCapHistory([...capHistory, {
+      id: crypto.randomUUID(),
+      date: newCapHistory.date,
+      cap: parseFloat(newCapHistory.cap)
+    }].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
+    setNewCapHistory({ date: '', cap: '' });
+  };
+
+  const handleRemoveCapHistory = (id: string) => {
+    setCapHistory(capHistory.filter(c => c.id !== id));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
@@ -53,7 +70,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
       monthlyDebit: parseFloat(formData.monthlyDebit) || 0,
       adminFee: parseFloat(formData.adminFee) || 0,
       weeklyCap: parseFloat(formData.weeklyCap) || 0,
-      fareCategories: categories
+      fareCategories: categories,
+      capHistory: capHistory
     });
   };
 
@@ -111,6 +129,27 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, config, 
               <input type="text" placeholder="New Category Label" value={newCat.label} onChange={e => setNewCat({...newCat, label: e.target.value})} className="md:col-span-7 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" />
               <input type="number" step="0.01" placeholder="Price" value={newCat.price} onChange={e => setNewCat({...newCat, price: e.target.value})} className="md:col-span-3 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono outline-none" />
               <button type="button" onClick={handleAddCat} className="md:col-span-2 bg-indigo-600 text-white rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-colors"><Plus className="w-5 h-5" /></button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b pb-2">Historical Weekly Caps</h4>
+            <p className="text-xs text-slate-500">Add past weekly caps here so historical calculations remain accurate.</p>
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+              {capHistory.map(c => (
+                <div key={c.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-sm font-semibold text-slate-700">From {c.date}</span>
+                  <div className="flex items-center gap-4">
+                    <span className="font-mono font-bold text-slate-500">£{c.cap.toFixed(2)}</span>
+                    <button type="button" onClick={() => handleRemoveCapHistory(c.id)} className="text-slate-300 hover:text-rose-500 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-2 pt-2">
+              <input type="date" value={newCapHistory.date} onChange={e => setNewCapHistory({...newCapHistory, date: e.target.value})} className="md:col-span-7 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" />
+              <input type="number" step="0.01" placeholder="Cap Amount" value={newCapHistory.cap} onChange={e => setNewCapHistory({...newCapHistory, cap: e.target.value})} className="md:col-span-3 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono outline-none" />
+              <button type="button" onClick={handleAddCapHistory} className="md:col-span-2 bg-indigo-600 text-white rounded-lg flex items-center justify-center hover:bg-indigo-700 transition-colors"><Plus className="w-5 h-5" /></button>
             </div>
           </div>
 
