@@ -242,7 +242,7 @@ const App: React.FC = () => {
             newFares.forEach(nf => {
               const existingIndex = merged.findIndex(f => f.date === nf.date);
               if (existingIndex > -1) {
-                merged[existingIndex].entries.push(...nf.entries);
+                merged[existingIndex] = nf; // Replace to avoid duplicates
               } else {
                 merged.push(nf);
               }
@@ -267,7 +267,13 @@ const App: React.FC = () => {
         
         if (newPayments.length > 0) {
           setPayments(prev => {
-            const merged = [...prev, ...newPayments];
+            const merged = [...prev];
+            newPayments.forEach(np => {
+              const exists = merged.some(p => p.date === np.date && p.label === np.label && p.amount === np.amount);
+              if (!exists) {
+                merged.push(np);
+              }
+            });
             return merged.sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
           });
         }
