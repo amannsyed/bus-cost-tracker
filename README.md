@@ -37,10 +37,14 @@
 **Prerequisites:** [Node.js](https://nodejs.org/) (v18+)
 
 ```bash
-# 1. Install dependencies
+# 1. Clone the repository
+git clone https://github.com/amannsyed/bus-cost-tracker.git
+cd bus-cost-tracker
+
+# 2. Install dependencies
 npm install
 
-# 2. Start the development server
+# 3. Start the development server
 npm run dev
 ```
 
@@ -54,8 +58,28 @@ The app will be available at `http://localhost:5173`.
 # Build for production
 npm run build
 
+# Preview the production build locally
+npm run preview
+
 # Deploy to GitHub Pages
 npm run deploy
+```
+
+---
+
+## 📁 Project Structure
+
+```text
+bus-cost-tracker/
+├── src/
+│   ├── components/      # Reusable React UI components
+│   ├── App.tsx           # Root application component
+│   ├── main.tsx          # React DOM entry point
+│   └── index.css         # Global styles
+├── public/               # Static assets
+├── package.json
+├── tsconfig.json
+└── vite.config.ts
 ```
 
 ---
@@ -67,3 +91,13 @@ npm run deploy
 3. **Log payments** — Record your monthly direct debit payments in the **Payment Ledger**.
 4. **Analyse** — The chart and summary cards update in real time, showing cumulative costs and your break-even point.
 5. **Adjust settings** — Use the ⚙️ icon to update your plan details or fare categories at any time.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request or open an Issue.
+
+## 📝 License
+
+MIT
